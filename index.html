@@ -9,7 +9,20 @@
   </head>
   <body>
     <main class="page">
-      <img class="frog" src="assets/img/20260106_140258.jpg" alt="Жаба" />
+      <picture>
+        <source srcset="assets/img/20260106_140258.avif" type="image/avif" />
+        <source srcset="assets/img/20260106_140258.webp" type="image/webp" />
+        <img
+          class="frog"
+          src="assets/img/20260106_140258.jpg"
+          alt="Жаба"
+          width="1200"
+          height="900"
+          loading="lazy"
+          decoding="async"
+          fetchpriority="high"
+        />
+      </picture>
     </main>
   </body>
 </html>
