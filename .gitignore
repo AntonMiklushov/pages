@@ -1,5 +1,6 @@
 .DS_Store
 Thumbs.db
+.env.local
 library_src/
 out/
 out/catalog.json
