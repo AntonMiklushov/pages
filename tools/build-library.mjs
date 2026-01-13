@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { encryptBytes } from "./crypto.mjs";
@@ -36,7 +37,9 @@ const pdfDir = path.join(root, "library_src", "pdfs");
 const metadataPath = path.join(root, "library_src", "metadata.json");
 const outObjectsRoot = path.join(root, "out", "objects");
 const outCatalogPath = path.join(root, "out", "catalog.json");
+const cachePath = path.join(root, "out", "build-cache.json");
 const libraryCatalogPath = path.join(root, "library", "catalog.enc");
+const cacheVersion = 1;
 
 function slugify(name) {
   return name
@@ -101,6 +104,52 @@ function safeObjectPath(rootPath, key) {
     throw new Error(`Unsafe object key: ${key}`);
   }
   return { safeKey, fullPath };
+}
+
+function buildKeyId(secret, iterationsValue) {
+  return createHash("sha256")
+    .update(secret)
+    .update("\0")
+    .update(String(iterationsValue))
+    .digest("hex");
+}
+
+function hashBytes(bytes) {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function loadCache() {
+  try {
+    const raw = await fs.readFile(cachePath, "utf8");
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.version !== cacheVersion) {
+      return null;
+    }
+    if (typeof parsed.keyId !== "string") {
+      return null;
+    }
+    return parsed;
+  } catch (error) {
+    if (error && error.code === "ENOENT") {
+      return null;
+    }
+    throw error;
+  }
+}
+
+async function saveCache(keyId) {
+  const payload = { version: cacheVersion, keyId };
+  await fs.mkdir(path.dirname(cachePath), { recursive: true });
+  await fs.writeFile(cachePath, JSON.stringify(payload, null, 2));
 }
 
 async function loadMetadata() {
@@ -181,6 +230,9 @@ const metadataMaps = buildMetadataMaps(metadata);
 const filenames = await listPdfFiles();
 const usedIds = new Set();
 const items = [];
+const cache = await loadCache();
+const cacheKeyId = buildKeyId(password, iterations);
+const forceReencrypt = !cache || cache.keyId !== cacheKeyId;
 
 await fs.mkdir(outObjectsRoot, { recursive: true });
 
@@ -200,17 +252,17 @@ for (const filename of filenames) {
       ? meta.title.trim()
       : humanize(baseName);
 
-  const objectKey =
-    typeof meta.objectKey === "string" && meta.objectKey.trim().length > 0
-      ? meta.objectKey.trim()
-      : `pdf/${id}.pdf.enc`;
-
+  const fileBytes = await fs.readFile(filePath);
+  const contentHash = hashBytes(fileBytes);
+  const objectKey = `pdf/${contentHash}.pdf.enc`;
   const { safeKey, fullPath } = safeObjectPath(outObjectsRoot, objectKey);
 
-  const fileBytes = await fs.readFile(filePath);
-  const encrypted = await encryptBytes(password, fileBytes, iterations);
-  await fs.mkdir(path.dirname(fullPath), { recursive: true });
-  await fs.writeFile(fullPath, encrypted);
+  const shouldEncrypt = forceReencrypt || !(await fileExists(fullPath));
+  if (shouldEncrypt) {
+    const encrypted = await encryptBytes(password, fileBytes, iterations);
+    await fs.mkdir(path.dirname(fullPath), { recursive: true });
+    await fs.writeFile(fullPath, encrypted);
+  }
 
   const stat = await fs.stat(filePath);
   const size =
@@ -256,6 +308,7 @@ const catalogBytes = textEncoder.encode(JSON.stringify(catalog));
 const catalogEncrypted = await encryptBytes(password, catalogBytes, iterations);
 await fs.mkdir(path.dirname(libraryCatalogPath), { recursive: true });
 await fs.writeFile(libraryCatalogPath, catalogEncrypted);
+await saveCache(cacheKeyId);
 
 console.log(`Encrypted ${items.length} PDF(s).`);
 console.log(`Wrote catalog to ${libraryCatalogPath}`);
