@@ -1,2 +1,9 @@
 .DS_Store
 Thumbs.db
+library_src/
+out/
+out/catalog.json
+*.tmp
+*.temp
+*.bak
+*.swp

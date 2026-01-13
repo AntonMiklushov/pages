@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Encrypted PDF Library</title>
+    <meta
+      name="description"
+      content="Client-side decrypted PDF library with an encrypted catalog."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="title">Encrypted PDF Library</div>
+          <div class="status" id="statusText">Locked</div>
+        </div>
+        <div class="top-controls">
+          <label class="control search">
+            <span class="control-label">Search</span>
+            <input
+              id="searchInput"
+              type="search"
+              placeholder="Title, author, tag, year"
+              autocomplete="off"
+              disabled
+            />
+          </label>
+          <label class="control sort">
+            <span class="control-label">Sort</span>
+            <select id="sortSelect" disabled>
+              <option value="title">Title A-Z</option>
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+            </select>
+          </label>
+        </div>
+      </header>
+      <main class="content">
+        <section class="catalog">
+          <div class="lock-card" id="lockScreen">
+            <h2>Unlock Library</h2>
+            <p>Enter your passphrase to decrypt the catalog locally.</p>
+            <div class="lock-field">
+              <input
+                id="passwordInput"
+                type="password"
+                placeholder="Passphrase"
+                autocomplete="current-password"
+              />
+              <button id="unlockBtn" type="button">Unlock</button>
+            </div>
+            <label class="remember">
+              <input id="rememberCheck" type="checkbox" />
+              Remember on this device
+            </label>
+            <p class="remember-warning">
+              Stores the passphrase in this browser. Anyone with device access
+              can read it.
+            </p>
+            <div class="error" id="lockError" role="alert" aria-live="polite"></div>
+          </div>
+          <div class="catalog-body is-hidden" id="catalogBody">
+            <div class="tag-bar">
+              <div class="tag-title">Filter tags</div>
+              <div class="tag-list" id="tagList"></div>
+            </div>
+            <div class="catalog-list" id="catalogList"></div>
+            <div class="empty-state is-hidden" id="emptyState">
+              No documents match your filters.
+            </div>
+          </div>
+        </section>
+        <section class="viewer">
+          <div class="viewer-card">
+            <div class="viewer-header">
+              <div class="viewer-title" id="viewerTitle">Select a document</div>
+              <div class="viewer-actions">
+                <a
+                  id="openTabLink"
+                  class="link-button is-disabled"
+                  href="#"
+                  target="_blank"
+                  rel="noopener"
+                  aria-disabled="true"
+                >
+                  Open in new tab
+                </a>
+                <button
+                  id="clearViewerBtn"
+                  class="ghost-button"
+                  type="button"
+                  disabled
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            <div class="viewer-status" id="viewerStatus">Locked</div>
+            <div class="viewer-body" id="viewerBody">
+              <div class="viewer-placeholder">
+                Unlock the library to load the catalog and decrypt PDFs locally in
+                your browser.
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="./app.js" defer></script>
+  </body>
+</html>

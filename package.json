@@ -1,0 +1,9 @@
+{
+  "name": "pages",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:library": "node tools/build-library.mjs",
+    "test:crypto": "node tools/selftest.mjs"
+  }
+}
