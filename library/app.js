@@ -4,7 +4,6 @@ const lockScreen = document.getElementById("lockScreen");
 const lockError = document.getElementById("lockError");
 const passwordInput = document.getElementById("passwordInput");
 const unlockBtn = document.getElementById("unlockBtn");
-const rememberCheck = document.getElementById("rememberCheck");
 const searchInput = document.getElementById("searchInput");
 const sortSelect = document.getElementById("sortSelect");
 const tagList = document.getElementById("tagList");
@@ -287,13 +286,9 @@ function setActiveItem(id) {
   });
 }
 
-function loadRememberedPassword() {
+function clearStoredPassword() {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      passwordInput.value = stored;
-      rememberCheck.checked = true;
-    }
+    localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
     // Ignore storage access issues (private browsing, blocked storage).
   }
@@ -416,16 +411,6 @@ async function unlockLibrary() {
     enableControls();
     clearViewer();
 
-    try {
-      if (rememberCheck.checked) {
-        localStorage.setItem(STORAGE_KEY, password);
-      } else {
-        localStorage.removeItem(STORAGE_KEY);
-      }
-    } catch (error) {
-      // Ignore storage write issues.
-    }
-
     setStatus("Done");
     setViewerStatus("Ready");
   } catch (error) {
@@ -541,4 +526,4 @@ setViewerMessage(
   "Unlock the library to load the catalog and decrypt PDFs locally.",
   "viewer-placeholder"
 );
-loadRememberedPassword();
+clearStoredPassword();
