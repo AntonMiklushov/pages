@@ -37,7 +37,7 @@ body {
 
 .frog-stage {
   width: min(92vw, 720px);
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 1 / 1;
   position: relative;
 }
 
