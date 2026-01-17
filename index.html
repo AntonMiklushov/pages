@@ -24,24 +24,86 @@
       sizes="180x180"
     />
     <link rel="stylesheet" href="assets/css/style.css" />
+    <script src="assets/js/main.js" defer></script>
   </head>
   <body>
     <main class="page">
       <div class="hero">
-        <picture>
-          <source srcset="assets/img/20260106_140258.avif" type="image/avif" />
-          <source srcset="assets/img/20260106_140258.webp" type="image/webp" />
-          <img
-            class="frog"
-            src="assets/img/20260106_140258.jpg"
-            alt="Жаба"
-            width="900"
-            height="1200"
-            loading="eager"
-            decoding="async"
-            fetchpriority="high"
-          />
-        </picture>
+        <div class="frog-stage" data-frog-slideshow>
+          <picture
+            class="frog-slide is-active"
+            data-frog-slide
+            style="background-image: url('assets/img/20260106_140258_blur.jpg');"
+            aria-hidden="false"
+          >
+            <source srcset="assets/img/20260106_140258.avif" type="image/avif" />
+            <source srcset="assets/img/20260106_140258.webp" type="image/webp" />
+            <img
+              class="frog"
+              src="assets/img/20260106_140258.jpg"
+              alt="????"
+              width="900"
+              height="1200"
+              loading="eager"
+              decoding="async"
+              fetchpriority="high"
+            />
+          </picture>
+          <picture
+            class="frog-slide"
+            data-frog-slide
+            style="background-image: url('assets/img/20260105_185840_blur.jpg');"
+            aria-hidden="true"
+          >
+            <source srcset="assets/img/20260105_185840.avif" type="image/avif" />
+            <source srcset="assets/img/20260105_185840.webp" type="image/webp" />
+            <img
+              class="frog"
+              src="assets/img/20260105_185840.jpg"
+              alt="????"
+              width="1440"
+              height="1080"
+              loading="eager"
+              decoding="async"
+            />
+          </picture>
+          <picture
+            class="frog-slide"
+            data-frog-slide
+            style="background-image: url('assets/img/20251231_141745_blur.jpg');"
+            aria-hidden="true"
+          >
+            <source srcset="assets/img/20251231_141745.avif" type="image/avif" />
+            <source srcset="assets/img/20251231_141745.webp" type="image/webp" />
+            <img
+              class="frog"
+              src="assets/img/20251231_141745.jpg"
+              alt="????"
+              width="1440"
+              height="1080"
+              loading="eager"
+              decoding="async"
+            />
+          </picture>
+          <picture
+            class="frog-slide"
+            data-frog-slide
+            style="background-image: url('assets/img/20251219_081209_blur.jpg');"
+            aria-hidden="true"
+          >
+            <source srcset="assets/img/20251219_081209.avif" type="image/avif" />
+            <source srcset="assets/img/20251219_081209.webp" type="image/webp" />
+            <img
+              class="frog"
+              src="assets/img/20251219_081209.jpg"
+              alt="????"
+              width="1440"
+              height="1080"
+              loading="eager"
+              decoding="async"
+            />
+          </picture>
+        </div>
         <a class="library-link" href="./library/">Open Library</a>
       </div>
       <a
