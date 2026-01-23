@@ -1,0 +1,129 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Local Library Admin</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="title">Local Library Admin</div>
+      <div class="subtitle">Manage encrypted PDFs in S3 from your machine.</div>
+    </header>
+
+    <section class="panel" id="configPanel">
+      <div class="panel-title">Catalog</div>
+      <div class="grid">
+        <label class="field">
+          <span>Catalog path</span>
+          <input id="catalogPath" type="text" placeholder="library/catalog.enc" />
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <input id="password" type="password" autocomplete="off" />
+        </label>
+        <label class="field">
+          <span>PBKDF2 iterations (new uploads)</span>
+          <input id="iterations" type="number" min="1" />
+        </label>
+        <label class="field">
+          <span>S3 endpoint (optional)</span>
+          <input id="endpoint" type="text" placeholder="https://storage.yandexcloud.net" />
+        </label>
+        <label class="field">
+          <span>AWS profile (optional)</span>
+          <input id="awsProfile" type="text" placeholder="default" />
+        </label>
+      </div>
+      <div class="actions">
+        <button id="loadCatalogBtn" class="primary">Load catalog</button>
+        <div id="catalogInfo" class="hint"></div>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="mainPanel">
+      <div class="layout">
+        <div class="column list">
+          <div class="list-header">
+            <input id="searchInput" type="search" placeholder="Search title, authors, tags..." />
+            <div id="countLabel" class="hint"></div>
+          </div>
+          <div id="itemList" class="item-list"></div>
+        </div>
+
+        <div class="column detail">
+          <div id="emptyState" class="empty">Select an item to view details.</div>
+
+          <div id="itemPanel" class="item-panel hidden">
+            <div class="item-header">
+              <div class="item-title" id="itemTitle"></div>
+              <div class="item-key" id="itemKey"></div>
+            </div>
+            <div class="item-actions">
+              <button id="downloadBtn">Download decrypted</button>
+              <button id="deleteBtn" class="danger">Delete</button>
+            </div>
+            <form id="editForm" class="form">
+              <div class="form-title">Edit metadata</div>
+              <label class="field">
+                <span>Title</span>
+                <input id="editTitle" type="text" />
+              </label>
+              <label class="field">
+                <span>Authors</span>
+                <input id="editAuthors" type="text" />
+              </label>
+              <label class="field">
+                <span>Year</span>
+                <input id="editYear" type="number" min="0" />
+              </label>
+              <label class="field">
+                <span>Tags (comma separated)</span>
+                <input id="editTags" type="text" />
+              </label>
+              <label class="field">
+                <span>Notes</span>
+                <textarea id="editNotes" rows="3"></textarea>
+              </label>
+              <button type="submit" class="primary">Save metadata</button>
+            </form>
+          </div>
+
+          <div class="upload">
+            <div class="form-title">Upload new PDF</div>
+            <label class="field">
+              <span>PDF file</span>
+              <input id="uploadFile" type="file" accept="application/pdf" />
+            </label>
+            <label class="field">
+              <span>Title</span>
+              <input id="uploadTitle" type="text" />
+            </label>
+            <label class="field">
+              <span>Authors</span>
+              <input id="uploadAuthors" type="text" />
+            </label>
+            <label class="field">
+              <span>Year</span>
+              <input id="uploadYear" type="number" min="0" />
+            </label>
+            <label class="field">
+              <span>Tags (comma separated)</span>
+              <input id="uploadTags" type="text" />
+            </label>
+            <label class="field">
+              <span>Notes</span>
+              <textarea id="uploadNotes" rows="3"></textarea>
+            </label>
+            <button id="uploadBtn" class="primary">Encrypt + upload</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="status" class="status"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
