@@ -358,6 +358,11 @@ button {
   justify-content: center;
 }
 
+.viewer-body.is-djvu {
+  align-items: stretch;
+  justify-content: stretch;
+}
+
 .viewer-placeholder,
 .viewer-error {
   padding: 24px;

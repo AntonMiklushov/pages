@@ -66,6 +66,7 @@ function clearViewerBody() {
   if (djvuViewer) {
     djvuViewer.classList.add("is-hidden");
   }
+  viewerBody.classList.remove("is-djvu");
 }
 
 function clearViewer() {
@@ -441,13 +442,23 @@ async function openItem(item) {
       setViewerStatus("Rendering");
       const viewer = getDjvuViewer();
       clearViewerBody();
+      viewerBody.classList.add("is-djvu");
       djvuViewer.classList.remove("is-hidden");
       await viewer.loadDocument(
         fileBytes.buffer.slice(
           fileBytes.byteOffset,
           fileBytes.byteOffset + fileBytes.byteLength
         ),
-        item.title || item.id
+        item.title || item.id,
+        {
+          viewMode: "continuous",
+          pageScale: 1,
+          uiOptions: {
+            pageCountInRow: 1,
+            firstRowPageCount: 1,
+            preferContinuousScroll: true,
+          },
+        }
       );
       openTabLink.href = "#";
       openTabLink.classList.add("is-disabled");
