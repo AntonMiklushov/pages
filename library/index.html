@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Encrypted PDF Library</title>
+    <title>Encrypted Library</title>
     <meta
       name="description"
-      content="Client-side decrypted PDF library with an encrypted catalog."
+      content="Client-side decrypted PDF and DJVU library with an encrypted catalog."
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
@@ -14,7 +14,7 @@
     <div class="app">
       <header class="topbar">
         <div class="brand">
-          <div class="title">Encrypted PDF Library</div>
+          <div class="title">Encrypted PDF/DJVU Library</div>
           <div class="status" id="statusText">Locked</div>
         </div>
         <div class="top-controls">
@@ -93,14 +93,17 @@
             <div class="viewer-status" id="viewerStatus">Locked</div>
             <div class="viewer-body" id="viewerBody">
               <div class="viewer-placeholder">
-                Unlock the library to load the catalog and decrypt PDFs locally in
-                your browser.
+                Unlock the library to load the catalog and decrypt PDFs/DJVU locally
+                in your browser.
               </div>
+              <div class="viewer-djvu is-hidden" id="djvuViewer"></div>
             </div>
           </div>
         </section>
       </main>
     </div>
+    <script src="./vendor/djvu.js" id="djvu_js_lib" defer></script>
+    <script src="./vendor/djvu_viewer.js" defer></script>
     <script src="./app.js" defer></script>
   </body>
 </html>

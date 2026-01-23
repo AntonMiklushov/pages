@@ -12,6 +12,7 @@ const catalogList = document.getElementById("catalogList");
 const emptyState = document.getElementById("emptyState");
 const viewerTitle = document.getElementById("viewerTitle");
 const viewerBody = document.getElementById("viewerBody");
+const djvuViewer = document.getElementById("djvuViewer");
 const openTabLink = document.getElementById("openTabLink");
 const clearViewerBtn = document.getElementById("clearViewerBtn");
 
@@ -31,6 +32,8 @@ const state = {
   requestId: 0,
 };
 
+let djvuInstance = null;
+
 function setStatus(text) {
   statusText.textContent = text;
 }
@@ -48,11 +51,21 @@ function clearLockError() {
 }
 
 function setViewerMessage(message, className) {
-  viewerBody.textContent = "";
+  clearViewerBody();
   const wrapper = document.createElement("div");
   wrapper.className = className;
   wrapper.textContent = message;
   viewerBody.appendChild(wrapper);
+}
+
+function clearViewerBody() {
+  viewerBody.querySelectorAll(".viewer-frame").forEach((frame) => frame.remove());
+  viewerBody
+    .querySelectorAll(".viewer-placeholder, .viewer-error")
+    .forEach((node) => node.remove());
+  if (djvuViewer) {
+    djvuViewer.classList.add("is-hidden");
+  }
 }
 
 function clearViewer() {
@@ -62,12 +75,20 @@ function clearViewer() {
   state.currentBlobUrl = null;
   viewerTitle.textContent = "Select a document";
   setViewerStatus("Ready");
-  viewerBody.textContent = "";
   setViewerMessage("Select a document to render it.", "viewer-placeholder");
   openTabLink.href = "#";
   openTabLink.classList.add("is-disabled");
   openTabLink.setAttribute("aria-disabled", "true");
+  openTabLink.textContent = "Open in new tab";
   clearViewerBtn.disabled = true;
+}
+
+function slugifyFilename(name) {
+  return String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 function formatBytes(size) {
@@ -113,6 +134,7 @@ function buildSearchText(item) {
     item.notes,
     item.year ? String(item.year) : "",
     item.tags.join(" "),
+    item.format || "",
   ];
   return fields
     .filter((value) => value && value.length > 0)
@@ -132,6 +154,8 @@ function normalizeItem(raw) {
     typeof raw.title === "string" && raw.title.trim().length > 0
       ? raw.title.trim()
       : id;
+  const formatRaw = typeof raw.format === "string" ? raw.format.trim() : "";
+  const format = formatRaw ? formatRaw.toLowerCase() : "pdf";
   const tags = normalizeTags(raw.tags);
   const item = {
     id,
@@ -142,6 +166,7 @@ function normalizeItem(raw) {
     tags,
     objectKey: typeof raw.objectKey === "string" ? raw.objectKey : "",
     size: Number.isFinite(raw.size) ? raw.size : undefined,
+    format,
   };
   item.searchText = buildSearchText(item);
   return item;
@@ -203,10 +228,13 @@ function renderList(items) {
     if (item.size) {
       metaPieces.push(formatBytes(item.size));
     }
+    if (item.format) {
+      metaPieces.push(item.format.toUpperCase());
+    }
     if (metaPieces.length > 0) {
       const meta = document.createElement("div");
       meta.className = "item-meta";
-      meta.textContent = metaPieces.join(" • ");
+      meta.textContent = metaPieces.join(" - ");
       card.appendChild(meta);
     }
 
@@ -294,6 +322,17 @@ function clearStoredPassword() {
   }
 }
 
+function getDjvuViewer() {
+  if (!window.DjVu || !window.DjVu.Viewer) {
+    throw new Error("DjVu viewer library not loaded.");
+  }
+  if (!djvuInstance) {
+    djvuInstance = new window.DjVu.Viewer();
+    djvuInstance.render(djvuViewer);
+  }
+  return djvuInstance;
+}
+
 async function openItem(item) {
   if (!item.objectKey) {
     setViewerMessage("Missing object key for this item.", "viewer-error");
@@ -321,31 +360,61 @@ async function openItem(item) {
 
     setStatus("Decrypting");
     setViewerStatus("Decrypting");
-    const pdfBytes = await decryptBytes(state.password, encryptedBytes);
+    const fileBytes = await decryptBytes(state.password, encryptedBytes);
     if (requestId !== state.requestId) {
       return;
     }
 
-    setStatus("Rendering");
-    setViewerStatus("Rendering");
-    const blob = new Blob([pdfBytes], { type: "application/pdf" });
-    const blobUrl = URL.createObjectURL(blob);
-    state.currentBlobUrl = blobUrl;
+    const format = item.format || "pdf";
+    if (format === "pdf") {
+      setStatus("Rendering");
+      setViewerStatus("Rendering");
+      const safeName = slugifyFilename(item.title || item.id) || item.id;
+      const file = new File([fileBytes], `${safeName}.pdf`, {
+        type: "application/pdf",
+      });
+      const blobUrl = URL.createObjectURL(file);
+      state.currentBlobUrl = blobUrl;
 
-    const frame = document.createElement("iframe");
-    frame.className = "viewer-frame";
-    frame.title = item.title;
-    frame.src = blobUrl;
-    viewerBody.textContent = "";
-    viewerBody.appendChild(frame);
+      const frame = document.createElement("iframe");
+      frame.className = "viewer-frame";
+      frame.title = item.title;
+      frame.src = blobUrl;
+      clearViewerBody();
+      viewerBody.appendChild(frame);
 
-    openTabLink.href = blobUrl;
-    openTabLink.classList.remove("is-disabled");
-    openTabLink.setAttribute("aria-disabled", "false");
-    clearViewerBtn.disabled = false;
+      openTabLink.href = blobUrl;
+      openTabLink.classList.remove("is-disabled");
+      openTabLink.setAttribute("aria-disabled", "false");
+      openTabLink.textContent = "Open in new tab";
+      clearViewerBtn.disabled = false;
 
-    setStatus("Done");
-    setViewerStatus("Done");
+      setStatus("Done");
+      setViewerStatus("Done");
+    } else if (format === "djvu") {
+      setStatus("Rendering");
+      setViewerStatus("Rendering");
+      const viewer = getDjvuViewer();
+      clearViewerBody();
+      djvuViewer.classList.remove("is-hidden");
+      await viewer.loadDocument(
+        fileBytes.buffer.slice(
+          fileBytes.byteOffset,
+          fileBytes.byteOffset + fileBytes.byteLength
+        ),
+        item.title || item.id
+      );
+      openTabLink.href = "#";
+      openTabLink.classList.add("is-disabled");
+      openTabLink.setAttribute("aria-disabled", "true");
+      openTabLink.textContent = "Open in new tab (PDF only)";
+      clearViewerBtn.disabled = false;
+
+      setStatus("Done");
+      setViewerStatus("Done");
+    } else {
+      throw new Error(`Unsupported format: ${format}`);
+    }
   } catch (error) {
     if (requestId !== state.requestId) {
       return;
@@ -355,7 +424,7 @@ async function openItem(item) {
     const message =
       error instanceof Error && error.message
         ? error.message
-        : "Failed to load PDF.";
+        : "Failed to load document.";
     setViewerMessage(message, "viewer-error");
   }
 }
@@ -523,7 +592,7 @@ openTabLink.addEventListener("click", (event) => {
 setStatus("Locked");
 setViewerStatus("Locked");
 setViewerMessage(
-  "Unlock the library to load the catalog and decrypt PDFs locally.",
+  "Unlock the library to load the catalog and decrypt PDFs/DJVU locally.",
   "viewer-placeholder"
 );
 clearStoredPassword();

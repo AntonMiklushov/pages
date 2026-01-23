@@ -371,6 +371,11 @@ button {
   border: none;
 }
 
+.viewer-djvu {
+  width: 100%;
+  height: 100%;
+}
+
 .is-hidden {
   display: none;
 }

@@ -1,6 +1,6 @@
 ﻿# Local Library Admin Panel
 
-This is a local-only admin UI for the encrypted PDF library. It runs on your machine and
+This is a local-only admin UI for the encrypted PDF/DJVU library. It runs on your machine and
 uses AWS CLI to upload/delete objects in S3-compatible storage.
 
 ## Run

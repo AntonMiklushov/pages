@@ -89,6 +89,25 @@ function parseYear(value) {
   return undefined;
 }
 
+function inferFormat(filename) {
+  const ext = path.extname(filename).toLowerCase();
+  if (ext === ".djvu" || ext === ".djv") {
+    return "djvu";
+  }
+  return "pdf";
+}
+
+function normalizeFormat(value, fallback) {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "pdf" || normalized === "djvu") {
+    return normalized;
+  }
+  return fallback;
+}
+
 function safeObjectKey(key) {
   const cleaned = key.replace(/\\/g, "/").replace(/^\/+/, "");
   const parts = cleaned
@@ -206,13 +225,16 @@ function buildMetadataMaps(metadata) {
   return { byFilename, byId };
 }
 
-async function listPdfFiles() {
+async function listLibraryFiles() {
   try {
     const entries = await fs.readdir(pdfDir, { withFileTypes: true });
     return entries
       .filter(
         (entry) =>
-          entry.isFile() && entry.name.toLowerCase().endsWith(".pdf")
+          entry.isFile() &&
+          (entry.name.toLowerCase().endsWith(".pdf") ||
+            entry.name.toLowerCase().endsWith(".djvu") ||
+            entry.name.toLowerCase().endsWith(".djv"))
       )
       .map((entry) => entry.name)
       .sort((a, b) => a.localeCompare(b));
@@ -227,7 +249,7 @@ async function listPdfFiles() {
 
 const metadata = await loadMetadata();
 const metadataMaps = buildMetadataMaps(metadata);
-const filenames = await listPdfFiles();
+const filenames = await listLibraryFiles();
 const usedIds = new Set();
 const items = [];
 const cache = await loadCache();
@@ -269,12 +291,16 @@ for (const filename of filenames) {
     Number.isFinite(meta.size) && meta.size > 0 ? meta.size : stat.size;
   const year = parseYear(meta.year);
   const tags = normalizeTags(meta.tags);
+  const format = normalizeFormat(meta.format, inferFormat(filename));
 
   const item = {
     id,
     title,
     objectKey: safeKey,
   };
+  if (format) {
+    item.format = format;
+  }
   if (meta.authors && typeof meta.authors === "string") {
     item.authors = meta.authors.trim();
   }
@@ -310,5 +336,5 @@ await fs.mkdir(path.dirname(libraryCatalogPath), { recursive: true });
 await fs.writeFile(libraryCatalogPath, catalogEncrypted);
 await saveCache(cacheKeyId);
 
-console.log(`Encrypted ${items.length} PDF(s).`);
+console.log(`Encrypted ${items.length} document(s).`);
 console.log(`Wrote catalog to ${libraryCatalogPath}`);

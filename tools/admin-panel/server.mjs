@@ -135,6 +135,10 @@ async function handleApi(req, res, requestUrl) {
       const year = stringOrEmpty(requestUrl.searchParams.get("year"));
       const tags = stringOrEmpty(requestUrl.searchParams.get("tags"));
       const notes = stringOrEmpty(requestUrl.searchParams.get("notes"));
+      const format = normalizeFormat(
+        stringOrEmpty(requestUrl.searchParams.get("format")),
+        inferFormatFromFilename(filename)
+      );
       const iterations = parseIterations(
         requestUrl.searchParams.get("iterations"),
         session.fileIterations
@@ -165,6 +169,7 @@ async function handleApi(req, res, requestUrl) {
         title: resolvedTitle,
         objectKey: safeKey,
         size: fileBytes.length,
+        format,
       };
 
       if (authors) {
@@ -300,9 +305,14 @@ async function handleApi(req, res, requestUrl) {
       const encrypted = await awsS3GetObject(session, item.objectKey);
       const plaintext = await decryptBytes(session.password, encrypted);
 
-      const safeName = `${slugify(item.title || id) || id}.pdf`;
+      const format =
+        typeof item.format === "string" ? item.format.toLowerCase() : "pdf";
+      const extension = format === "djvu" ? "djvu" : "pdf";
+      const contentType =
+        format === "djvu" ? "image/vnd.djvu" : "application/pdf";
+      const safeName = `${slugify(item.title || id) || id}.${extension}`;
       res.writeHead(200, {
-        "Content-Type": "application/pdf",
+        "Content-Type": contentType,
         "Content-Disposition": `inline; filename=\"${safeName}\"`,
       });
       res.end(Buffer.from(plaintext));
@@ -660,6 +670,25 @@ function parseYear(value) {
     return Number.isFinite(parsed) ? parsed : undefined;
   }
   return undefined;
+}
+
+function inferFormatFromFilename(filename) {
+  const ext = path.extname(filename || "").toLowerCase();
+  if (ext === ".djvu" || ext === ".djv") {
+    return "djvu";
+  }
+  return "pdf";
+}
+
+function normalizeFormat(value, fallback) {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "pdf" || normalized === "djvu") {
+    return normalized;
+  }
+  return fallback;
 }
 
 function safeObjectKey(key) {

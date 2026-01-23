@@ -52,6 +52,8 @@ function normalizeItem(raw) {
   const tags = Array.isArray(raw.tags)
     ? raw.tags.filter((tag) => typeof tag === "string" && tag.trim().length > 0)
     : [];
+  const formatRaw = typeof raw.format === "string" ? raw.format.trim() : "";
+  const format = formatRaw ? formatRaw.toLowerCase() : "pdf";
   const item = {
     id,
     title,
@@ -61,6 +63,7 @@ function normalizeItem(raw) {
     tags,
     objectKey: typeof raw.objectKey === "string" ? raw.objectKey : "",
     size: Number.isFinite(raw.size) ? raw.size : undefined,
+    format,
   };
   item.searchText = [
     item.title,
@@ -68,6 +71,7 @@ function normalizeItem(raw) {
     item.notes,
     item.year ? String(item.year) : "",
     item.tags.join(" "),
+    item.format || "",
   ]
     .join(" ")
     .toLowerCase();
@@ -86,6 +90,14 @@ function formatBytes(size) {
     return `${kb.toFixed(1)} KB`;
   }
   return `${(kb / 1024).toFixed(1)} MB`;
+}
+
+function inferFormatFromFilename(name) {
+  const lower = String(name || "").toLowerCase();
+  if (lower.endsWith(".djvu") || lower.endsWith(".djv")) {
+    return "djvu";
+  }
+  return "pdf";
 }
 
 function renderList() {
@@ -121,6 +133,9 @@ function renderList() {
     }
     if (item.tags.length > 0) {
       metaPieces.push(item.tags.join(", "));
+    }
+    if (item.format) {
+      metaPieces.push(item.format.toUpperCase());
     }
     const meta = document.createElement("div");
     meta.className = "meta";
@@ -217,6 +232,7 @@ async function uploadPdf() {
 
   setStatus("Encrypting and uploading...");
   try {
+    const format = inferFormatFromFilename(file.name);
     const query = new URLSearchParams({
       session: sessionId,
       filename: file.name,
@@ -226,6 +242,7 @@ async function uploadPdf() {
       tags: uploadTags.value,
       notes: uploadNotes.value,
       iterations: iterationsInput.value,
+      format,
     });
 
     const buffer = await file.arrayBuffer();
