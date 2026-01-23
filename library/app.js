@@ -91,6 +91,20 @@ function slugifyFilename(name) {
     .replace(/^-|-$/g, "");
 }
 
+function detectFormat(bytes, fallback = "pdf") {
+  if (!(bytes instanceof Uint8Array) || bytes.length < 4) {
+    return fallback;
+  }
+  const head = new TextDecoder("ascii").decode(bytes.slice(0, 16));
+  if (head.startsWith("%PDF-")) {
+    return "pdf";
+  }
+  if (head.startsWith("AT&TFORM") || head.includes("DJVU")) {
+    return "djvu";
+  }
+  return fallback;
+}
+
 function formatBytes(size) {
   if (!Number.isFinite(size)) {
     return "";
@@ -365,7 +379,7 @@ async function openItem(item) {
       return;
     }
 
-    const format = item.format || "pdf";
+    const format = detectFormat(fileBytes, item.format || "pdf");
     if (format === "pdf") {
       setStatus("Rendering");
       setViewerStatus("Rendering");
