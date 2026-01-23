@@ -91,18 +91,49 @@ function slugifyFilename(name) {
     .replace(/^-|-$/g, "");
 }
 
+function hasAsciiSignature(bytes, signature, maxBytes) {
+  if (!(bytes instanceof Uint8Array)) {
+    return false;
+  }
+  const needle = new TextEncoder().encode(signature);
+  const limit = Math.min(bytes.length, maxBytes);
+  for (let i = 0; i <= limit - needle.length; i += 1) {
+    let match = true;
+    for (let j = 0; j < needle.length; j += 1) {
+      if (bytes[i + j] !== needle[j]) {
+        match = false;
+        break;
+      }
+    }
+    if (match) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function detectFormat(bytes, fallback = "pdf") {
-  if (!(bytes instanceof Uint8Array) || bytes.length < 4) {
+  if (!(bytes instanceof Uint8Array)) {
     return fallback;
   }
-  const head = new TextDecoder("ascii").decode(bytes.slice(0, 16));
-  if (head.startsWith("%PDF-")) {
+  const fallbackLower = String(fallback || "").toLowerCase();
+  const isPdf =
+    bytes.length >= 5 && hasAsciiSignature(bytes, "%PDF-", 1024);
+  if (isPdf) {
     return "pdf";
   }
-  if (head.startsWith("AT&TFORM") || head.includes("DJVU")) {
+  const isDjvu =
+    hasAsciiSignature(bytes, "AT&TFORM", 32) ||
+    hasAsciiSignature(bytes, "DJVU", 64) ||
+    hasAsciiSignature(bytes, "DJVM", 64) ||
+    hasAsciiSignature(bytes, "DJVI", 64);
+  if (isDjvu) {
     return "djvu";
   }
-  return fallback;
+  if (fallbackLower && fallbackLower !== "pdf") {
+    return fallbackLower;
+  }
+  return "djvu";
 }
 
 function formatBytes(size) {
